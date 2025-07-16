@@ -1,0 +1,93 @@
+:root {
+  --russian-violet: #0c0a3e;
+  --purple: #7b1e7a;
+  --raspberry-rose: #b33f62;
+  --bittersweet: #f9564f;
+  --sunset: #f3c677;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--russian-violet);
+  color: white;
+}
+
+nav {
+  background-color: var(--purple);
+  padding: 12px;
+}
+
+nav a {
+  color: var(--sunset);
+  margin-right: 15px;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+nav a:hover {
+  color: var(--bittersweet);
+  text-decoration: underline;
+}
+input[type="text"],
+input[type="password"],
+textarea {
+  width: 300px;
+  padding: 8px;
+  border: none;
+  border-radius: 4px;
+  margin-top: 5px;
+}
+
+input[type="submit"] {
+  background-color: var(--bittersweet);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+input[type="submit"]:hover {
+  background-color: var(--raspberry-rose);
+}
+
+.login-btn {
+  background-color: var(--bittersweet);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 16px;
+  display: inline-block;
+  min-width: 150px;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.login-btn:hover {
+  background-color: var(--raspberry-rose);
+}
+
+.login-btn,
+.register-btn {
+  background-color: var(--bittersweet);
+  color: white;
+  padding: 12px 20px;
+  margin: 10px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 16px;
+  display: inline-block;
+  min-width: 200px;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.login-btn:hover,
+.register-btn:hover {
+  background-color: var(--raspberry-rose);
+}
