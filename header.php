@@ -14,10 +14,13 @@ if (session_status() === PHP_SESSION_NONE) {
 <nav>
   <strong>Auction Site</strong> |
   <a href="index.php">Home</a>
+  <a href="all_items.php">All Items</a>
+
   <?php if (isset($_SESSION['user_id'])): ?>
     <a href="my_bids.php">My Bids</a>
     <a href="my_items.php">My Listings</a>
     <a href="add_item.php">Add Item</a>
+    <a href="profile.php">My Profile</a>
     <a href="logout.php">Logout</a>
   <?php else: ?>
     <a href="register.php">Register</a>

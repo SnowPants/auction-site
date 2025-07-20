@@ -1,49 +1,67 @@
 <?php
 session_start();
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 include 'connection.php';
 
 if (!isset($_SESSION['user_id'])) {
-    die("You must be logged in to bid.");
+    die("You must be logged in to place a bid.");
 }
 
-$item_id = intval($_POST['item_id']);
-$user_id = $_SESSION['user_id'];
-$amount = floatval($_POST['amount']);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    die("Invalid access method.");
+}
 
-// Get current highest bid
-$sql = "SELECT MAX(amount) AS highest_bid FROM bids WHERE item_id = ?";
-$stmt = $conn->prepare($sql);
+$user_id = $_SESSION['user_id'];
+$item_id = $_POST['item_id'] ?? null;
+$bid_amount = $_POST['bid_amount'] ?? null;
+$full_name = trim($_POST['name'] ?? '');
+$shipping_address = trim($_POST['shipping_address'] ?? '');
+
+if (!$item_id || !$bid_amount || !$full_name || !$shipping_address) {
+    die("All fields are required.");
+}
+
+// Fetch the item
+$stmt = $conn->prepare("SELECT * FROM items WHERE id = ?");
 $stmt->bind_param("i", $item_id);
 $stmt->execute();
-$result = $stmt->get_result();
-$row = $result->fetch_assoc();
-$current_high = $row['highest_bid'] ?? 0;
+$item = $stmt->get_result()->fetch_assoc();
 
-// Get starting price if no bids yet
-if (!$current_high) {
-    $start_sql = "SELECT price FROM items WHERE id = ?";
-    $start_stmt = $conn->prepare($start_sql);
-    $start_stmt->bind_param("i", $item_id);
-    $start_stmt->execute();
-    $start_result = $start_stmt->get_result();
-    $start_row = $start_result->fetch_assoc();
-    $current_high = $start_row['price'];
+if (!$item) {
+    die("Item not found.");
 }
 
-// Compare with bid
-if ($amount <= $current_high) {
-    die(" Your bid must be higher than $" . number_format($current_high, 2));
+// Check if auction ended using correct timezone
+$current_time = time();
+$end_time = strtotime($item['end_time']);
+
+if ($end_time <= $current_time) {
+    die("Auction has ended. You can no longer bid on this item.");
 }
 
-// Insert the bid
-$insert_sql = "INSERT INTO bids (item_id, user_id, amount) VALUES (?, ?, ?)";
-$insert_stmt = $conn->prepare($insert_sql);
-$insert_stmt->bind_param("iid", $item_id, $user_id, $amount);
+// Get highest current bid
+$bid_stmt = $conn->prepare("SELECT MAX(amount) AS max_bid FROM bids WHERE item_id = ?");
+$bid_stmt->bind_param("i", $item_id);
+$bid_stmt->execute();
+$max_result = $bid_stmt->get_result()->fetch_assoc();
+$current_highest = $max_result['max_bid'] ?? 0;
 
-if ($insert_stmt->execute()) {
-    header("Location: item.php?id=" . $item_id);
+$minimum_required = max($item['price'], $current_highest + 0.01);
+if ($bid_amount < $minimum_required) {
+    die("Your bid must be at least $" . number_format($minimum_required, 2));
+}
+
+// Insert bid
+$insert = $conn->prepare("INSERT INTO bids (item_id, user_id, amount, created_at, full_name, shipping_address) VALUES (?, ?, ?, NOW(), ?, ?)");
+$insert->bind_param("iisss", $item_id, $user_id, $bid_amount, $full_name, $shipping_address);
+
+if ($insert->execute()) {
+    header("Location: item.php?id=$item_id&success=1");
     exit();
 } else {
-    echo " Error placing bid: " . $insert_stmt->error;
+    die("Failed to place bid. Please try again.");
 }
 ?>

@@ -3,25 +3,20 @@ session_start();
 include 'connection.php';
 include 'header.php';
 
-if (!isset($_SESSION['user_id'])) {
-  echo "<p style='text-align:center;'>Please <a href='login.php'>log in</a> to view your bids.</p>";
-  include 'footer.php';
-  exit;
-}
-
+// Set timezone
 date_default_timezone_set('America/Chicago');
 
-$user_id = $_SESSION['user_id'];
+// Get selected category from URL
 $selected_category = $_GET['category'] ?? '';
 
-// Build SQL
+// Build SQL with JOIN to categories
 $sql = "SELECT i.id, i.title, i.price AS starting_price, i.end_time, i.image_path,
                MAX(b.amount) AS highest_bid,
                c.name AS category
         FROM items i
-        JOIN bids b ON i.id = b.item_id
+        LEFT JOIN bids b ON i.id = b.item_id
         LEFT JOIN categories c ON i.category_id = c.id
-        WHERE b.user_id = ?";
+        WHERE i.end_time > NOW()";
 
 if (!empty($selected_category)) {
     $sql .= " AND i.category_id = ?";
@@ -30,19 +25,16 @@ if (!empty($selected_category)) {
 $sql .= " GROUP BY i.id, i.title, i.price, i.end_time, i.image_path, c.name
           ORDER BY i.end_time ASC";
 
-// Prepare and bind
 if (!empty($selected_category)) {
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ii", $user_id, $selected_category);
+    $stmt->bind_param("i", $selected_category);
 } else {
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $user_id);
 }
 
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
-
 
 <style>
   body {
@@ -52,10 +44,14 @@ $result = $stmt->get_result();
     margin: 0;
     padding: 20px;
   }
-
-  h2 {
-    text-align: center;
-  }
+  h2 { text-align: center; }
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 320px);
+  gap: 20px;
+  justify-content: start;
+  margin-top: 20px;
+}
 
 .grid-container {
   display: grid;
@@ -67,22 +63,19 @@ $result = $stmt->get_result();
 
 
 
-
 .item-card {
   background: #fff;
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 15px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  width: auto;
+  width: 320px;
   height: 500px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   overflow: hidden;
-  margin-bottom: 20px; /* ADD THIS */
 }
-
 
 
   .item-card h3 {
@@ -98,29 +91,22 @@ $result = $stmt->get_result();
     border-radius: 4px;
     margin-bottom: 10px;
   }
-
-  .item-card button {
-    margin: 5px 5px 0 0;
-    padding: 6px 12px;
-    font-size: 14px;
-  }
-
-  .delete-btn {
-    background-color: red;
+  .bid-btn {
+    background-color: #7b1e7a;
     color: white;
     border: none;
+    padding: 6px 12px;
+    margin-top: 3px;
   }
-
   .countdown {
     font-weight: bold;
     color: orange;
-    margin: 10px 0;
   }
 </style>
 
-<h2>Your Bids</h2>
+<h2>All Active Auction Items</h2>
 
-<form method="GET">
+<form method="GET" style="text-align:center; margin-bottom: 20px;">
   <label for="category">Filter by Category:</label>
   <select name="category" id="category" onchange="this.form.submit()">
     <option value="">All Categories</option>
@@ -185,7 +171,7 @@ $result = $stmt->get_result();
     <?php endwhile; ?>
   </div>
 <?php else: ?>
-  <p style="text-align:center;">You have not placed any bids yet.</p>
+  <p style="text-align:center;">There are no active auctions at the moment.</p>
 <?php endif; ?>
 
 <p style="text-align:center; margin-top: 30px;">

@@ -14,6 +14,9 @@
   <input type="submit" value="Login">
 </form>
 
+<p style="margin: 20px;">
+  Don’t have an account? 
+  <a href="register.php" style="color: #7b1e7a; font-weight: bold;">Register here</a>.
+</p>
 
 <?php include 'footer.php'; ?>
-
