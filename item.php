@@ -1,6 +1,21 @@
 <?php
 session_start();
 include 'connection.php';
+
+// Normalize the requested ID
+$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+
+// If it’s missing or invalid (<1), or not found in the DB, grab the first ID
+if ($id < 1 || !$conn->query("SELECT 1 FROM items WHERE id = $id")->fetch_assoc()) {
+    $res = $conn->query("SELECT id FROM items ORDER BY id ASC LIMIT 1");
+    if ($row = $res->fetch_assoc()) {
+        header("Location: item.php?id={$row['id']}");
+        exit;
+    }
+}
+
+// …the rest of your item.php logic…
+
 include 'header.php';
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
